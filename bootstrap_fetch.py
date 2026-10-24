@@ -48,6 +48,8 @@ def main():
     payload={}
     try:
         env=os.environ
+        for name in ('OKX_DEMO_KEY','OKX_DEMO_SECRET','OKX_DEMO_PASSPHRASE','COINALYZE_API_KEY','DEMO_DEPLOYMENT_JSON'):
+            env.pop(name,None)
         if (env.get('GITHUB_REPOSITORY')!=TARGET or env.get('GITHUB_REPOSITORY_ID')!=str(REPOSITORY_ID)
                 or env.get('GITHUB_WORKFLOW_SHA')!=env.get('GITHUB_SHA')
                 or env.get('GITHUB_EVENT_NAME')!='workflow_dispatch'
@@ -66,10 +68,8 @@ def main():
             sys.path.insert(0,str(root))
             from dependency_install import install
             python=install(root,wire)
-            payload=dict(data_key=env.pop('BTC_DEMO_DATA_KEY',''),github_token=token,
-                github_usage=budget.value(),deployment=strict_json(env.pop('DEMO_DEPLOYMENT_JSON','')),
-                credentials={k:env.pop(v,'') for k,v in {'key':'OKX_DEMO_KEY','secret':'OKX_DEMO_SECRET','passphrase':'OKX_DEMO_PASSPHRASE'}.items()},
-                coinalyze_key=env.pop('COINALYZE_API_KEY',''))
+            payload=dict(operation='bootstrap',data_key=env.pop('BTC_DEMO_DATA_KEY',''),github_token=token,
+                github_usage=budget.value())
             from child_runner import run_child
             value,code=run_child([python,'-B',str(root/'launch_runtime.py')],payload,root,timeout=350)
         print(json.dumps(value,separators=(',',':')));return code
