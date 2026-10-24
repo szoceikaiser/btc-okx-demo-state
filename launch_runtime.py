@@ -37,13 +37,17 @@ def main():
     try:
         raw=sys.stdin.buffer.read(65537)
         if len(raw)>65536:raise ValueError()
-        payload=json.loads(raw)
+        from bounded_http import strict_json
+        payload=strict_json(raw)
+        if type(payload) is not dict or set(payload)!={'operation','data_key','github_token','github_usage'} or payload['operation']!='bootstrap':raise ValueError()
         root=Path.cwd();manifest=json.loads((root/'PUBLIC-MANIFEST.json').read_bytes())
         if manifest.get('capsule_class')!='PERSONALLY_PACKAGED_REQUIRES_REVIEW':raise ValueError()
         import tempfile
         with tempfile.TemporaryDirectory(prefix='btc-private-') as parent:
             key=parse_key(payload.get('data_key'))
             restored=authenticate_restore(manifest,(root/'runtime.capsule').read_bytes(),key,parent,(root/'.github/workflows/okx-demo.yml').read_bytes())
+            payload.update(runtime_review_sha256=manifest['runtime_review_sha256'],
+                public_manifest_sha256=sha((root/'PUBLIC-MANIFEST.json').read_bytes()),capsule_sha256=sha((root/'runtime.capsule').read_bytes()))
             payload['_runtime_review_pin']=manifest['runtime_review_sha256']
             value,code=invoke_locked(restored,payload)
         print(json.dumps(value,separators=(',',':')));return code
