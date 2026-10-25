@@ -56,7 +56,7 @@ an explicit new approval. The expired consent pull request must not be merged.
 
 Reviewed external operator bundle SHA256 pins (no keys or private user data):
 
-- ablauf.py: 3a4724beb22ec5d89cb49b6d0af87ca268c39653a9b117a9f257d72619691751
+- ablauf.py: 4b1385028657d5d395d3deee74bca86b22e298695bbccff0abe7f2a2662bb816
 - arm_protocol.py: 3f596e2365f93871a7b08de82c51b9177cbbc1e24e994889f86be088bbba55a8
 - bedienung.py: fb1a8ee9adda5f609da3a40699627c069896b4fe81db00b6a2cfd06bcfd2bba2
 - plan_binden.py: 0d6c2ca1a6592eca28ce2ee0501edd5d9eee49121965696d8d3bda841fb4057b
@@ -103,3 +103,21 @@ delay before mainchat readiness therefore cannot spend that ARM clock. No old
 ledger, marker, deadline, session or allowance is reset or adopted. All original
 60second pre-dispatch,110second pre-signing,150second delivery and240second job
 limits remain unchanged. The extra queue conveys no consent or runtime authority.
+
+## Verify the first public follow-up before dispatch
+
+After mainchat readiness and the user-owned initial quota snapshot, the SAME
+user process performs one workflow-runs GET using the existing fixed allowance.
+The actual route, quota policy and response shape must succeed before ARMED is
+created. A code/session-bound READINESS-WARMUP receipt links this public response
+to its immutable wire metadata. A failure here stops before any workflow dispatch.
+
+Wire observations persist only HTTP status, selected public numeric quota headers,
+request ID, byte count and body hash before acceptance. Failures also preserve
+the rejection phase, exception type and numeric system or TLS verification code.
+No raw body, credentials, exception message or signing input is recorded. Such
+observations confer no authority and cannot repair an incomplete accepted ledger.
+No network request is retried; all forty-call, response, time and consent limits
+remain unchanged. This is a defensive preflight/diagnostic correction: the failed
+run response itself was not saved, and later successful public GETs do not prove
+the original cause. The existing failed attempts remain consumed.
