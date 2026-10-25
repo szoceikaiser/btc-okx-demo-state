@@ -56,8 +56,8 @@ an explicit new approval. The expired consent pull request must not be merged.
 
 Reviewed external operator bundle SHA256 pins (no keys or private user data):
 
-- ablauf.py: 6bbf75c384bde5c4fa2c92d557cb7116642976fc841cbedc6f5c4e12a476d2d0
-- arm_protocol.py: 5d9a528a379bc608aebf4316af634e7541de3791c8576e235a7c58c26e69056c
+- ablauf.py: 3a4724beb22ec5d89cb49b6d0af87ca268c39653a9b117a9f257d72619691751
+- arm_protocol.py: 3f596e2365f93871a7b08de82c51b9177cbbc1e24e994889f86be088bbba55a8
 - bedienung.py: fb1a8ee9adda5f609da3a40699627c069896b4fe81db00b6a2cfd06bcfd2bba2
 - plan_binden.py: 0d6c2ca1a6592eca28ce2ee0501edd5d9eee49121965696d8d3bda841fb4057b
 - Start-Persoenlich.ps1: 0c1d7fb68522f1bd4699c5982094f232869f6bba37bb13df01d6f0859b74a585
@@ -86,3 +86,20 @@ and monotonically consume the allowance. Existing ledgers and ambiguous transpor
 remain fatal. All150/240second limits, the110second signing floor and the private
 signing process remain unchanged. No new operational run was needed for the
 public snapshot reproduction and offline ownership tests.
+
+## Before-arm operator rendezvous
+
+Executing the personal arm command first enters a separate public waiting queue.
+It creates only an immutable operator-wait marker and OPERATOR-WAITING evidence;
+no REST quota, ARM clock, dispatch or signer starts. The mainchat, with the actual
+workflow UI and all checks ready, releases this queue once through a session/code
+bound OPERATOR-GO file and its atomic empty-directory ready signal. The user
+process accepts only a fresh matching observation (at most five seconds old).
+The queue expires after a fixed300seconds and cannot be resumed or retried.
+
+Only then does the SAME user process establish its own first and only fixed40
+read allowance and enter the unchanged120second ARM wait. A paste or chat-turn
+delay before mainchat readiness therefore cannot spend that ARM clock. No old
+ledger, marker, deadline, session or allowance is reset or adopted. All original
+60second pre-dispatch,110second pre-signing,150second delivery and240second job
+limits remain unchanged. The extra queue conveys no consent or runtime authority.
