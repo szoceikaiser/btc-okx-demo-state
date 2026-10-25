@@ -33,7 +33,7 @@ def commit_bytes(c):
         if not isinstance(payload,str) or not isinstance(signature,str):raise PublicError('git_commit_payload')
         header,sep,message=payload.partition('\n\n')
         if not sep:raise PublicError('git_commit_payload')
-        raw=(header+'\ngpgsig '+signature.rstrip('\n').replace('\n','\n ')+'\n\n'+message).encode()
+        raw=(header+'\ngpgsig '+signature.replace('\n','\n ')+'\n\n'+message).encode()
     else:
         def person(p):
             if not isinstance(p,dict):raise PublicError('git_commit_person')
