@@ -56,7 +56,7 @@ an explicit new approval. The expired consent pull request must not be merged.
 
 Reviewed external operator bundle SHA256 pins (no keys or private user data):
 
-- ablauf.py: 4b1385028657d5d395d3deee74bca86b22e298695bbccff0abe7f2a2662bb816
+- ablauf.py: c78dd6d5f58ec118176fc764d775f6d364238d8e47f4e5173ef790bac184ca6b
 - arm_protocol.py: 3f596e2365f93871a7b08de82c51b9177cbbc1e24e994889f86be088bbba55a8
 - bedienung.py: fb1a8ee9adda5f609da3a40699627c069896b4fe81db00b6a2cfd06bcfd2bba2
 - plan_binden.py: 0d6c2ca1a6592eca28ce2ee0501edd5d9eee49121965696d8d3bda841fb4057b
@@ -76,14 +76,15 @@ create-only and cannot replace an existing dispatch observation.
 The agent preparation stage performs Git fetch/proof and browser preparation only;
 it creates no anonymous REST ledger or quota baseline. The user arm process starts
 the first and only rate-limit request and binds its own fixed40-request allowance.
-Response headers and core counters must agree, enough quota and time must remain,
-and QUOTA-OWNER.json binds the owner role to the session and actual code.
+Response headers govern the current provider reserve; typed body counters are
+informational. Enough quota and time must remain, and QUOTA-OWNER.json binds
+the owner role to the session and actual code.
 
 Agent and user execution contexts returned different reset timestamps in the
 observed failure. No old context is adopted, rebased, deleted or replenished.
-After the first user snapshot, every later response must retain the same reset
-and monotonically consume the allowance. Existing ledgers and ambiguous transport
-remain fatal. All150/240second limits, the110second signing floor and the private
+Every response must independently cover the unspent local allowance. Regional
+provider snapshots may change reset or counter values; they never refill our
+persisted40-request budget. Existing ledgers and ambiguous transport remain fatal. All150/240second limits, the110second signing floor and the private
 signing process remain unchanged. No new operational run was needed for the
 public snapshot reproduction and offline ownership tests.
 
@@ -121,3 +122,24 @@ No network request is retried; all forty-call, response, time and consent limits
 remain unchanged. This is a defensive preflight/diagnostic correction: the failed
 run response itself was not saved, and later successful public GETs do not prove
 the original cause. The existing failed attempts remain consumed.
+
+## Documented provider snapshots and the fixed local budget
+
+GitHub documents regional variation in rate headers, including increases in a
+later remaining count. The headers of each response govern the current provider
+reserve; an exact monotone sequence and equality with rate_limit body counters
+are not API guarantees. See https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api .
+
+The local debit counter remains persisted, monotone and capped at forty total
+requests. Each response must still have valid core quota headers, at most60/hour,
+a future reset, and enough remaining capacity for all unspent local requests.
+No maximum of past quotas, new allowance, counter reset, transport retry or
+ambiguous-receipt recovery is introduced. HTTP403/429 still stop the attempt.
+The two-read pre-dispatch gate applies this same per-response rule and retains
+all identity, wire, owner, deadline and private consent checks.
+
+Run3 recorded a valid HTTP200 with a 52-to59 remaining change and a new reset
+before the old window ended. Its rejection by the previous cross-response
+monotonicity check is proven. This does not recover the missing run2 response.
+All old attempts remain consumed. No fourth initialization is authorized by this
+local package; publication and any new actual run need explicit user approval.
