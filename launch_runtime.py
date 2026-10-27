@@ -33,25 +33,27 @@ def invoke_locked(root,payload,python=sys.executable):
     return run_child([python,'-B','hosted_launch.py'],payload,root,timeout=330)
 
 def main():
-    payload={}
+    payload={};phase='PUBLIC_VERIFY'
     try:
         raw=sys.stdin.buffer.read(65537)
         if len(raw)>65536:raise ValueError()
         from bounded_http import strict_json
         payload=strict_json(raw)
-        if type(payload) is not dict or set(payload)!={'operation','data_key','github_token','github_usage'} or payload['operation']!='bootstrap':raise ValueError()
+        if type(payload) is not dict or set(payload)!={'operation','data_key','github_token','github_usage','credentials','coinalyze_key'} or payload['operation']!='control':raise ValueError()
         root=Path.cwd();manifest=json.loads((root/'PUBLIC-MANIFEST.json').read_bytes())
         if manifest.get('capsule_class')!='PERSONALLY_PACKAGED_REQUIRES_REVIEW':raise ValueError()
         import tempfile
         with tempfile.TemporaryDirectory(prefix='btc-private-') as parent:
             key=parse_key(payload.get('data_key'))
+            phase='CAPSULE_RESTORE'
             restored=authenticate_restore(manifest,(root/'runtime.capsule').read_bytes(),key,parent,(root/'.github/workflows/okx-demo.yml').read_bytes())
             payload.update(runtime_review_sha256=manifest['runtime_review_sha256'],
                 public_manifest_sha256=sha((root/'PUBLIC-MANIFEST.json').read_bytes()),capsule_sha256=sha((root/'runtime.capsule').read_bytes()))
             payload['_runtime_review_pin']=manifest['runtime_review_sha256']
+            phase='INNER_VERIFY'
             value,code=invoke_locked(restored,payload)
         print(json.dumps(value,separators=(',',':')));return code
     except BaseException:
-        print('{"status":"BLOCKED","reason":"public_launch_blocked"}');return 20
+        print(json.dumps(dict(status='BLOCKED',reason='public_launch_blocked',phase=phase),separators=(',',':')));return 20
     finally:payload.clear()
 if __name__=='__main__':sys.exit(main())
