@@ -45,7 +45,7 @@ def run_child(args,payload,cwd,*,timeout=330):
         if reader.is_alive() or overflow.is_set():return {'status':'BLOCKED','reason':'child_output_rejected'},20
         value=child_summary(bytes(capture),code)
         # Rejected output and BLOCKED status must never become a successful job.
-        if value['status']=='BLOCKED':return value,24 if code==24 else 20
+        if value['status'] in ('BLOCKED','CONTROL_CLOSED_RECEIPT_MISSING'):return value,24 if code==24 else 20
         return value,0
     except BaseException:
         if proc and proc.poll() is None:proc.kill()

@@ -45,11 +45,12 @@ def fetch_public(git):
     return m,files
 
 def main():
-    payload={}
+    payload={};phase='PUBLIC_VERIFY'
     try:
         env=os.environ
-        for name in ('OKX_DEMO_KEY','OKX_DEMO_SECRET','OKX_DEMO_PASSPHRASE','COINALYZE_API_KEY','DEMO_DEPLOYMENT_JSON'):
-            env.pop(name,None)
+        credentials={k:env.pop(n,'') for k,n in (('key','OKX_DEMO_KEY'),('secret','OKX_DEMO_SECRET'),('passphrase','OKX_DEMO_PASSPHRASE'))}
+        coinalyze_key=env.pop('COINALYZE_API_KEY','')
+        env.pop('DEMO_DEPLOYMENT_JSON',None)
         if (env.get('GITHUB_REPOSITORY')!=TARGET or env.get('GITHUB_REPOSITORY_ID')!=str(REPOSITORY_ID)
                 or env.get('GITHUB_WORKFLOW_SHA')!=env.get('GITHUB_SHA')
                 or env.get('GITHUB_EVENT_NAME')!='workflow_dispatch'
@@ -57,6 +58,7 @@ def main():
                 or env.get('GITHUB_ACTIONS')!='true' or env.get('RUNNER_ENVIRONMENT')!='github-hosted'
                 or env.get('RUNNER_OS')!='Linux'):raise PublicError('public_hosted_context')
         token=env.pop('DEMO_JOB_TOKEN','');budget=Budget();wire=Wire(budget)
+        phase='PUBLIC_FETCH'
         git=ExactGit(wire,token,TARGET,REPOSITORY_ID,env.get('GITHUB_SHA'));m,files=fetch_public(git)
         if m['capsule_class']!='PERSONALLY_PACKAGED_REQUIRES_REVIEW':raise PublicError('capsule_unbound')
         with tempfile.TemporaryDirectory(prefix='btc-public-') as tmp:
@@ -67,13 +69,14 @@ def main():
             # Verified code is loaded only after all public member pins passed.
             sys.path.insert(0,str(root))
             from dependency_install import install
+            phase='DEPENDENCIES'
             python=install(root,wire)
-            payload=dict(operation='bootstrap',data_key=env.pop('BTC_DEMO_DATA_KEY',''),github_token=token,
-                github_usage=budget.value())
+            payload=dict(operation='control',data_key=env.pop('BTC_DEMO_DATA_KEY',''),github_token=token,
+                github_usage=budget.value(),credentials=credentials,coinalyze_key=coinalyze_key)
             from child_runner import run_child
             value,code=run_child([python,'-B',str(root/'launch_runtime.py')],payload,root,timeout=350)
         print(json.dumps(value,separators=(',',':')));return code
     except BaseException:
-        print('{"status":"BLOCKED","reason":"public_launch_blocked"}');return 20
+        print(json.dumps(dict(status='BLOCKED',reason='public_launch_blocked',phase=phase),separators=(',',':')));return 20
     finally:payload.clear()
 if __name__=='__main__':sys.exit(main())
