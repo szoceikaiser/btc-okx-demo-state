@@ -30,7 +30,7 @@ def invoke_locked(root,payload,python=sys.executable):
     import subprocess
     r=subprocess.run([python,'-B','-c',check],cwd=root,env=child_environment(),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=20)
     if r.returncode:raise PrivacyError('private_runtime_review_failed')
-    return run_child([python,'-B','hosted_launch.py'],payload,root,timeout=330)
+    return run_child([python,'-B','hosted_launch.py'],payload,root,timeout=960)
 
 def main():
     payload={};phase='PUBLIC_VERIFY'
