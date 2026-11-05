@@ -39,7 +39,10 @@ def main():
         if len(raw)>65536:raise ValueError()
         from bounded_http import strict_json
         payload=strict_json(raw)
-        if type(payload) is not dict or set(payload)!={'operation','data_key','github_token','github_usage','credentials','coinalyze_key'} or payload['operation']!='control':raise ValueError()
+        if type(payload) is not dict or payload.get('operation') not in ('control','recover','run'):raise ValueError()
+        required={'operation','data_key','github_token','github_usage','credentials','coinalyze_key'}
+        if payload['operation']=='run':required.add('authorization')
+        if set(payload)!=required:raise ValueError()
         root=Path.cwd();manifest=json.loads((root/'PUBLIC-MANIFEST.json').read_bytes())
         if manifest.get('capsule_class')!='PERSONALLY_PACKAGED_REQUIRES_REVIEW':raise ValueError()
         import tempfile

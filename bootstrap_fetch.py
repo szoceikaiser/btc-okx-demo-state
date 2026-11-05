@@ -53,10 +53,13 @@ def main():
         env.pop('DEMO_DEPLOYMENT_JSON',None)
         if (env.get('GITHUB_REPOSITORY')!=TARGET or env.get('GITHUB_REPOSITORY_ID')!=str(REPOSITORY_ID)
                 or env.get('GITHUB_WORKFLOW_SHA')!=env.get('GITHUB_SHA')
-                or env.get('GITHUB_EVENT_NAME')!='workflow_dispatch'
+                or env.get('GITHUB_EVENT_NAME') not in ('workflow_dispatch','schedule')
                 or env.get('GITHUB_WORKFLOW_REF')!=TARGET+'/.github/workflows/okx-demo.yml@refs/heads/main'
                 or env.get('GITHUB_ACTIONS')!='true' or env.get('RUNNER_ENVIRONMENT')!='github-hosted'
                 or env.get('RUNNER_OS')!='Linux'):raise PublicError('public_hosted_context')
+        operation='run' if env.get('GITHUB_EVENT_NAME')=='schedule' else env.pop('DEMO_OPERATION','control')
+        if operation not in ('control','recover','run'):raise PublicError('public_operation')
+        authorization=env.pop('DEMO_AUTHORIZATION_JSON','')
         token=env.pop('DEMO_JOB_TOKEN','');budget=Budget();wire=Wire(budget)
         phase='PUBLIC_FETCH'
         git=ExactGit(wire,token,TARGET,REPOSITORY_ID,env.get('GITHUB_SHA'));m,files=fetch_public(git)
@@ -71,10 +74,11 @@ def main():
             from dependency_install import install
             phase='DEPENDENCIES'
             python=install(root,wire)
-            payload=dict(operation='control',data_key=env.pop('BTC_DEMO_DATA_KEY',''),github_token=token,
+            payload=dict(operation=operation,data_key=env.pop('BTC_DEMO_DATA_KEY',''),github_token=token,
                 github_usage=budget.value(),credentials=credentials,coinalyze_key=coinalyze_key)
+            if operation=='run':payload['authorization']=strict_json(authorization.encode())
             from child_runner import run_child
-            value,code=run_child([python,'-B',str(root/'launch_runtime.py')],payload,root,timeout=350)
+            value,code=run_child([python,'-B',str(root/'launch_runtime.py')],payload,root,timeout=960 if operation=='recover' else 350)
         print(json.dumps(value,separators=(',',':')));return code
     except BaseException:
         print(json.dumps(dict(status='BLOCKED',reason='public_launch_blocked',phase=phase),separators=(',',':')));return 20
