@@ -8,9 +8,11 @@ import tempfile
 from bounded_http import Budget,Wire,PublicError,strict_json,canonical
 from exact_git import TARGET,REPOSITORY_ID,ExactGit,sha
 
+# The retained historical control consent is pinned data, never fresh authority.
 PUBLIC_FILES=('.github/workflows/okx-demo.yml','bounded_http.py','exact_git.py','bootstrap_fetch.py',
     'private_envelope.py','private_capsule.py','public_status.py','child_runner.py','launch_runtime.py',
-    'dependency_install.py','requirements.lock','wheels.lock.json','README.md','.gitattributes','.gitignore')
+    'dependency_install.py','requirements.lock','wheels.lock.json','README.md','.gitattributes','.gitignore',
+    'control-consent.json')
 
 def fetch_public(git):
     git.root();raw=git.blob('PUBLIC-MANIFEST.json',32768);m=strict_json(raw)
